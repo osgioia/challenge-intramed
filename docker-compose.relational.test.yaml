@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:17.9-alpine
+    expose:
+      - 5432
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+
+  maildev:
+    build:
+      context: .
+      dockerfile: maildev.Dockerfile
+    expose:
+      - 1080
+      - 1025
+
+  # Uncomment to use redis
+  # redis:
+  #   image: redis:7-alpine
+  #   expose:
+  #     - 6379
+
+  api:
+    build:
+      context: .
+      dockerfile: relational.test.Dockerfile
+    env_file:
+      - env-example-relational
+    environment:
+      # The e2e suite starts a mock SWAPI server inside the api container
+      # (see test/helpers/swapi-mock.helper.ts) and the app must talk to it
+      # instead of the real external API.
+      SWAPI_BASE_URL: http://localhost:3999
+    volumes:
+      - ./src:/usr/src/app/src
+      - ./test:/usr/src/app/test
